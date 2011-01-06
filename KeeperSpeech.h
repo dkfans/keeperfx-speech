@@ -11,12 +11,32 @@
 #ifdef KEEPERSPEECH_EXPORTS
 #define KEEPERSPEECH_API __declspec(dllexport)
 #else
+#ifdef __GNUC__ 
+#define KEEPERSPEECH_API __cdecl
+#else
 #define KEEPERSPEECH_API __declspec(dllimport)
+#endif
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef enum
+{
+	KSR_OK = 0,
+	KSR_NOT_KNOWN,
+	KSR_CREATE_ENGINE,
+	KSR_CREATE_RECOG_CONTEXT,
+	KSR_SET_NOTIFY,
+	KSR_SET_INTEREST,
+	KSR_CREATE_GRAMMAR,
+	KSR_LOAD_GRAMMAR,
+	KSR_NOMOREEVENTS,
+	KSR_ACTIVATE_GRAMMAR,
+	KSR_NO_LIB_INSTALLED, //returned if import code can't find a KeeperSpeech module
+	KSR_ALREADY_INIT,
+} KEEPERSPEECH_REASON;
 
 typedef enum
 {
@@ -71,11 +91,17 @@ typedef struct
 	} u;
 } KEEPERSPEECH_EVENT;
 
-KEEPERSPEECH_API int			KeeperSpeechInit(void);
-KEEPERSPEECH_API const char *	KeeperSpeechErrorMessage(int reason);
-KEEPERSPEECH_API void			KeeperSpeechExit(void);
-KEEPERSPEECH_API int			KeeperSpeechPopEvent(KEEPERSPEECH_EVENT * ev);
-KEEPERSPEECH_API void			KeeperSpeechClearEvents(void);
+/**
+	Macro which in addition to declaring a KEEPERSPEECH_API function also declares a function pointer
+	with the same name but with "fp" prepended.
+*/
+#define KEEPERLIBDECLARE(r, x, p) typedef KEEPERSPEECH_API r (*fp##x)p; KEEPERSPEECH_API r x p
+
+KEEPERLIBDECLARE(KEEPERSPEECH_REASON,	KeeperSpeechInit,			(void));
+KEEPERLIBDECLARE(const char *,			KeeperSpeechErrorMessage,	(KEEPERSPEECH_REASON reason));
+KEEPERLIBDECLARE(void,					KeeperSpeechExit,			(void));
+KEEPERLIBDECLARE(KEEPERSPEECH_REASON,	KeeperSpeechPopEvent,		(KEEPERSPEECH_EVENT * ev));
+KEEPERLIBDECLARE(void,					KeeperSpeechClearEvents,	(void));
 
 #ifdef __cplusplus
 };
